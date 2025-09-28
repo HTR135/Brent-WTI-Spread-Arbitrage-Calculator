@@ -1,0 +1,29 @@
+import pandas as pd
+
+brent = pd.read_csv("brent.csv", skiprows=4)
+wti = pd.read_csv("wti.csv", skiprows=4)
+
+brent.columns = ["Date", "Brent"]
+wti.columns = ["Date", "WTI"]
+
+brent["Date"] = pd.to_datetime(brent["Date"])
+wti["Date"] = pd.to_datetime(wti["Date"])
+
+brent = brent.sort_values("Date")
+wti = wti.sort_values("Date")
+
+df = pd.merge(brent, wti, on="Date", how="inner")
+
+df["Spread"] = df["Brent"] - df["WTI"]
+
+freight = 2.5
+df["Arb_Open"] = df["Spread"] > freight
+
+print("\nArbitrage Windows (Spread > Freight):")
+arb_windows = df[df["Arb_Open"]]
+
+for _, row in arb_windows.iterrows():
+    print(f"{row['Date'].date()} | Brent: {row['Brent']:.2f} | "
+          f"WTI: {row['WTI']:.2f} | Spread: {row['Spread']:.2f}")
+
+print(f"\nTotal days with arb open: {len(arb_windows)}")
